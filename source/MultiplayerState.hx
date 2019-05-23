@@ -5,29 +5,45 @@ import flixel.group.FlxGroup;
 import flixel.input.keyboard.FlxKey;
 
 class MultiplayerState extends FlxState{
-    var _players: FlxGroup;
+    public var players: FlxGroup;
+	public var bullets: FlxGroup;
+
 	var _MP: Multiplayer;
 
 	override public function create():Void{		
-		_players = new FlxGroup();
-        add(_players);
+		players = new FlxGroup();
+        add(players);
 
-		_players.add(new Player(0, FlxKey.UP, FlxKey.DOWN, FlxKey.LEFT, FlxKey.RIGHT));
-		_players.add(new Player(1, FlxKey.W, FlxKey.S, FlxKey.A, FlxKey.D));
+		players.add(new Player(0, [FlxKey.W, FlxKey.S, FlxKey.A, FlxKey.D, FlxKey.SPACE]));
 
 		_MP = new Multiplayer();
 		add(_MP);
+
+		bullets = new FlxGroup();
+		for(i in 0...100){
+            bullets.add(new Bullet());
+        }
 
 		super.create();
 	}
 
 	public function getPlayerByID(id: Int): Player{
-		for (p in _players)
+		for (p in players)
 			if(cast(p, Player).pID == id)
 				return cast(p, Player);
 		
 		return null;
 	}
+
+    public function shooting(x: Float, y: Float):Void{
+		var s: Bullet = cast bullets.getFirstAvailable();
+		if(s != null){
+            s.reset(x, y);
+            s.velocity.x = 200;
+            s.animation.play("shot");
+            add(s);
+		}
+    }
 
 	override public function update(e:Float):Void{
 		super.update(e);
