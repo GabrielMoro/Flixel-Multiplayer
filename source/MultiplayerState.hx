@@ -8,7 +8,7 @@ class MultiplayerState extends FlxState{
     public var players: FlxGroup;
 	public var bullets: FlxGroup;
 
-	var _MP: Multiplayer;
+	public var MP: Multiplayer;
 
 	override public function create():Void{		
 		players = new FlxGroup();
@@ -16,8 +16,8 @@ class MultiplayerState extends FlxState{
 
 		players.add(new Player(0, [FlxKey.W, FlxKey.S, FlxKey.A, FlxKey.D, FlxKey.SPACE]));
 
-		_MP = new Multiplayer();
-		add(_MP);
+		MP = new Multiplayer();
+		add(MP);
 
 		bullets = new FlxGroup();
 		for(i in 0...100){
