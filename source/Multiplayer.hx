@@ -1,10 +1,19 @@
 package;
 
+import networking.Network;
+import networking.utils.NetworkEvent;
+import networking.utils.NetworkMode;
+import networking.sessions.Session;
+
+import openfl.Lib;
+
 import flixel.FlxSprite;
 import flixel.FlxG;
 import flixel.input.keyboard.FlxKey;
 
 class Multiplayer extends FlxSprite{
+    public static inline var SERVER_IP = '127.0.0.1';
+
     public static inline var overflowPeriod = 1;
     public static inline var contPeriod = 3;
 
@@ -21,8 +30,20 @@ class Multiplayer extends FlxSprite{
 
     public function new(){
         super();
+        createClient();
 
         _playerID = -1;
+    }
+
+    function createClient(){
+        var client = Network.registerSession(NetworkMode.CLIENT, 
+        { ip: SERVER_IP, port: 8888, flash_policy_file_url: 'http://' + SERVER_IP + '/crossdomain.xml' });
+
+        client.addEventListener(NetworkEvent.MESSAGE_RECEIVED, function(event: NetworkEvent) {
+            FlxG.log.add(event.data);
+        });
+
+        client.start();
     }
 
     public function getMyIDMultiplayer():Int{
@@ -179,13 +200,9 @@ class Multiplayer extends FlxSprite{
             
             send([OP_MOVE, 2, 
             FlxG.random.int(0, Std.int(FlxG.width / 2)), FlxG.random.int(0, Std.int(FlxG.height / 2)), 
-            FlxG.random.float(-100, 100), FlxG.random.float(-100, 100)]);
-            
-            send([OP_MOVE, 3, 
-            FlxG.random.int(0, Std.int(FlxG.width / 2)), FlxG.random.int(0, Std.int(FlxG.height / 2)), 
             FlxG.random.float(-200, -100), FlxG.random.float(-200, -100)]);
 
-            send([OP_SHOOT, 3, 
+            send([OP_SHOOT, 2, 
             FlxG.random.int(0, Std.int(FlxG.width / 2)), FlxG.random.int(0, Std.int(FlxG.height / 2))]);
         }
     }

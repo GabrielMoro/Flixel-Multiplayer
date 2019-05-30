@@ -50,19 +50,19 @@ class Player extends FlxSprite{
             this.velocity.y *= -1;
 
         if(FlxG.keys.anyPressed([_upKey]) && this.y > 0)  {
-            velocity.y += -speed;
+            acceleration.y += -speed;
             send = true;
         }
         if(FlxG.keys.anyPressed([_downKey]) && this.y + this.height < FlxG.height){
-            velocity.y += speed;
+            acceleration.y += speed;
             send = true;
         }
         if(FlxG.keys.anyPressed([_leftKey]) && this.x > 0){
-            velocity.x -= speed;
+            acceleration.x -= speed;
             send = true;
         }  
         if(FlxG.keys.anyPressed([_rightKey]) && this.x + this.width < FlxG.width){
-            velocity.x += speed;
+            acceleration.x += speed;
             send = true;
         } 
         if(send)
