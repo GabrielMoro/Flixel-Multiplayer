@@ -72,7 +72,7 @@ class Player extends FlxSprite{
         if(send)
             mp.sendMove(this);
 
-        if(FlxG.keys.anyPressed([_fireKey])){
+        if(FlxG.keys.anyJustPressed([_fireKey])){
             cast(FlxG.state, MultiplayerState).shooting(this.x, this.y);
             mp.sendNoOverflow([
                 Multiplayer.OP_SHOOT,
