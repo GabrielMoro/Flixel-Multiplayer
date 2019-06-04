@@ -11,8 +11,10 @@ import flixel.FlxSprite;
 import flixel.FlxG;
 import flixel.input.keyboard.FlxKey;
 
+// id 8
+
 class Multiplayer extends FlxSprite{
-    public static inline var SERVER_IP = '127.0.0.1';
+    public static inline var SERVER_IP = '172.20.83.155';
 
     public static inline var overflowPeriod = 1;
     public static inline var contPeriod = 3;
@@ -20,40 +22,46 @@ class Multiplayer extends FlxSprite{
     // Ind 0 = OP
     public static inline var OP_NEW_PLAYER = 'n';
     public static inline var OP_MOVE = 'm';         // [op, player id, player x, player y, p velocity x, p velocity y]
-    public static inline var OP_SHOOT = 's';        // [op, player id, player x, player y]
-    public static inline var OP_DIED = 'd';         // [op, player id, player x, player y]
+    public static inline var OP_SHOOT = 't';        // [op, player id, player x, player y]
+    public static inline var OP_DIED = 'o';         // [op, player id, player x, player y]
 
     var _cont: Float = 0;
     var _overflowCont: Float = 0;
     var _overflowLastOP: String = "";
-    var _playerID: Int;
+    var _playerID: String;
+
+    var _client: Session;
 
     public function new(){
         super();
         createClient();
 
-        _playerID = -1;
+        _playerID = '8';
     }
 
     function createClient(){
-        var client = Network.registerSession(NetworkMode.CLIENT, 
-        { ip: SERVER_IP, port: 8888, flash_policy_file_url: 'http://' + SERVER_IP + '/crossdomain.xml' });
+        _client = Network.registerSession(NetworkMode.CLIENT, 
+        { ip: SERVER_IP, port: 8888, flash_policy_file_url: 'http://' + SERVER_IP + ':9999/crossdomain.xml' });
 
-        client.addEventListener(NetworkEvent.MESSAGE_RECEIVED, function(event: NetworkEvent) {
-            FlxG.log.add(event.data);
-        });
+        _client.addEventListener(NetworkEvent.MESSAGE_RECEIVED, onMessageReceived);
 
-        client.start();
+        _client.addEventListener(NetworkEvent.INIT_SUCCESS, onInitSuccess);
+
+        _client.start();
     }
 
-    public function getMyIDMultiplayer():Int{
+    function onInitSuccess(event: NetworkEvent):Void{
+        FlxG.log.add("A: " + event.data);
+    }
+
+    public function getMyIDMultiplayer():String{
         return _playerID;
     }
 
     public function send(msg: Array<Any>):Void{
-        onMessage(msg);
+        // var session = Network.sessions[0];
+        _client.send(msg);
     }
-
 
     public function sendNoOverflow(msg: Array<Any>):Void{
         var op = msg[0];
@@ -77,7 +85,7 @@ class Multiplayer extends FlxSprite{
         ]);
     }
 
-    function verifySender(inID: Int): Bool{
+    function verifySender(inID: String): Bool{
         if(inID == _playerID)
             return false;
 
@@ -90,7 +98,7 @@ class Multiplayer extends FlxSprite{
         return true;
     }
 
-    public function move(inID: Int, inX: Float, inY: Float, inVelX: Float, inVelY: Float):Void{
+    public function move(inID: String, inX: Float, inY: Float, inVelX: Float, inVelY: Float, inAccelX: Float, inAccelY: Float):Void{
         if(!verifySender(inID))
             return;
 
@@ -103,10 +111,12 @@ class Multiplayer extends FlxSprite{
         p.y = inY;
         p.velocity.x = inVelX;
         p.velocity.y = inVelY;
+        p.acceleration.x = inAccelX;
+        p.acceleration.y = inAccelY;
         
     }
 
-    public function shoot(inID: Int, inX: Float, inY: Float):Void{
+    public function shoot(inID: String, inX: Float, inY: Float):Void{
         if(!verifySender(inID))
             return;
 
@@ -121,7 +131,7 @@ class Multiplayer extends FlxSprite{
         state.shooting(inX, inY);
     }
 
-    public function died(inID: Int, inX: Float, inY: Float):Void{
+    public function died(inID: String, inX: Float, inY: Float):Void{
         var p = getPlayer(inID);
 
         if(p == null)    
@@ -134,7 +144,7 @@ class Multiplayer extends FlxSprite{
         return cast(FlxG.state, MultiplayerState);
     }
 
-    public function getPlayer(inID: Int):Player{
+    public function getPlayer(inID: String):Player{
         return getState().getPlayerByID(inID);
     }
 
@@ -145,7 +155,7 @@ class Multiplayer extends FlxSprite{
         }
         var op: String = msg[0];
 
-        var senderID: Int = cast(msg[1], Int);
+        var senderID: String = cast(msg[1], String);
         if(!verifySender(senderID))
             return;
         
@@ -155,17 +165,19 @@ class Multiplayer extends FlxSprite{
                     FlxG.log.error("ERROR: MESSAGE LENGTH");                    
                 }
 
-                move(cast(msg[1], Int),     // Sender ID
+                move(cast(msg[1], String),  // Sender ID
                      cast(msg[2], Float),   // Sender X
                      cast(msg[3], Float),   // Sender Y
                      cast(msg[4], Float),   // Sender Velocity X
-                     cast(msg[5], Float));  // Sender Velocity Y
+                     cast(msg[5], Float),   // Sender Velocity Y
+                     cast(msg[6], Float),   // Sender Acceleration Y
+                     cast(msg[7], Float));  // Sender Acceleration Y
             case OP_SHOOT:
                 if(msg.length != 4){
                     FlxG.log.error("ERROR: MESSAGE LENGTH");                    
                 }
 
-                shoot(cast(msg[1], Int),     // Sender ID
+                shoot(cast(msg[1], String),  // Sender ID
                       cast(msg[2], Float),   // Sender X
                       cast(msg[3], Float));  // Sender Y);
             case OP_DIED:
@@ -173,12 +185,16 @@ class Multiplayer extends FlxSprite{
                     FlxG.log.error("ERROR: MESSAGE LENGTH");
                 }
 
-                died(cast(msg[1], Int),     // Sender ID
+                died(cast(msg[1], String),   // Sender ID
                       cast(msg[2], Float),   // Sender X
                       cast(msg[3], Float));  // Sender Y);
             default: 
                 FlxG.log.error("ERROR: INVALID OP " + op + "\n");
         }
+    }
+
+    function onMessageReceived(event: NetworkEvent):Void{
+        onMessage(event.data);      
     }
 
     override public function update(e:Float):Void{
@@ -194,16 +210,6 @@ class Multiplayer extends FlxSprite{
 
         if(_cont >= contPeriod){
             _cont = 0;
-            send([OP_MOVE, 1, 
-            FlxG.random.int(0, Std.int(FlxG.width / 2)), FlxG.random.int(0, Std.int(FlxG.height / 2)), 
-            FlxG.random.float(-100, 100), FlxG.random.float(-100, 100)]);
-            
-            send([OP_MOVE, 2, 
-            FlxG.random.int(0, Std.int(FlxG.width / 2)), FlxG.random.int(0, Std.int(FlxG.height / 2)), 
-            FlxG.random.float(-200, -100), FlxG.random.float(-200, -100)]);
-
-            send([OP_SHOOT, 2, 
-            FlxG.random.int(0, Std.int(FlxG.width / 2)), FlxG.random.int(0, Std.int(FlxG.height / 2))]);
         }
     }
 }

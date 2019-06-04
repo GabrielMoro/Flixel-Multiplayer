@@ -5,9 +5,9 @@ import flixel.FlxG;
 import flixel.input.keyboard.FlxKey;
 
 class Player extends FlxSprite{
-    static inline var speed = 20;
+    static inline var speed = 5;
 
-    public var pID: Int;
+    public var pID: String;
     public var simulated: Bool;
     public var lastTimeActive: Float;
 
@@ -17,7 +17,7 @@ class Player extends FlxSprite{
     var _rightKey: FlxKey;
     var _fireKey: FlxKey;
 
-    public function new(id:Int, keys:Array<FlxKey> = null){
+    public function new(id:String, keys:Array<FlxKey> = null){
         super();
         pID = id;
 
@@ -44,34 +44,38 @@ class Player extends FlxSprite{
         var send: Bool = false;
         var mp = cast(FlxG.state, MultiplayerState).MP;
 
-        if(this.x <= 0 || this.x + this.width >= FlxG.width)
-            this.velocity.x *= -1;
-        if(this.y <= 0 || this.y + this.height >= FlxG.height)
-            this.velocity.y *= -1;
+        // if(this.x <= 0 || this.x + this.width >= FlxG.width)
+        //     this.velocity.x *= -1;
+        // if(this.y <= 0 || this.y + this.height >= FlxG.height)
+        //     this.velocity.y *= -1;
 
-        if(FlxG.keys.anyPressed([_upKey]) && this.y > 0)  {
-            acceleration.y += -speed;
+        if(FlxG.keys.anyPressed([_upKey]))  {
+            // acceleration.y -= speed;
+            y -= speed;
             send = true;
         }
-        if(FlxG.keys.anyPressed([_downKey]) && this.y + this.height < FlxG.height){
-            acceleration.y += speed;
+        if(FlxG.keys.anyPressed([_downKey])){
+            // acceleration.y += speed;
+            y += speed;            
             send = true;
         }
-        if(FlxG.keys.anyPressed([_leftKey]) && this.x > 0){
-            acceleration.x -= speed;
+        if(FlxG.keys.anyPressed([_leftKey])){
+            // acceleration.x -= speed;
+            x -= speed;
             send = true;
         }  
-        if(FlxG.keys.anyPressed([_rightKey]) && this.x + this.width < FlxG.width){
-            acceleration.x += speed;
+        if(FlxG.keys.anyPressed([_rightKey])){
+            // acceleration.x += speed;
+            x += speed;            
             send = true;
         } 
         if(send)
             mp.sendMove(this);
 
-        if(FlxG.keys.anyJustPressed([_fireKey])){
+        if(FlxG.keys.anyPressed([_fireKey])){
             cast(FlxG.state, MultiplayerState).shooting(this.x, this.y);
             mp.sendNoOverflow([
-                Multiplayer.OP_MOVE,
+                Multiplayer.OP_SHOOT,
                 mp.getMyIDMultiplayer(),
                 x, y
             ]);

@@ -14,7 +14,7 @@ class MultiplayerState extends FlxState{
 		players = new FlxGroup();
         add(players);
 
-		players.add(new Player(0, [FlxKey.W, FlxKey.S, FlxKey.A, FlxKey.D, FlxKey.SPACE]));
+		players.add(new Player('8', [FlxKey.W, FlxKey.S, FlxKey.A, FlxKey.D, FlxKey.SPACE]));
 
 		MP = new Multiplayer();
 		add(MP);
@@ -27,7 +27,7 @@ class MultiplayerState extends FlxState{
 		super.create();
 	}
 
-	public function getPlayerByID(id: Int): Player{
+	public function getPlayerByID(id: String): Player{
 		for (p in players)
 			if(cast(p, Player).pID == id)
 				return cast(p, Player);
